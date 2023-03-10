@@ -1,0 +1,8 @@
+prefix=/home/cse4568/catkin_ws/devel/.private/pa2
+
+Name: pa2
+Description: Description of pa2
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

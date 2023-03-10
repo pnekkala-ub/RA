@@ -1,0 +1,8 @@
+prefix=/home/cse4568/catkin_ws/devel/.private/lab3
+
+Name: lab3
+Description: Description of lab3
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

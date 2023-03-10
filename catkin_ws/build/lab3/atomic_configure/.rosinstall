@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/cse4568/catkin_ws/devel/.private/lab3/setup.sh

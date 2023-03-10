@@ -1,0 +1,7 @@
+<launch>
+    <!-- start the driver node -->
+    <node pkg="activity_3" type="drive_node.py" name="drive_node" output="screen" />
+
+    <!-- start the visualization node below this line-->
+    
+</launch>

@@ -1,0 +1,9 @@
+<?xml version='1.0'?>
+
+<launch>
+    <param name="Vmax" type="double" value="2" />
+    <param name="fname" type="str" value="$(find lab3)/lab3_track.csv" /> 
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab3)/rviz/pp_v1.rviz" />
+    <node pkg="lab3" type="pp_v2.py" name="pp" output="screen" launch-prefix="bash -c 'sleep 7.0; $0 $@'"/>
+    <!--node name="plots" pkg="rqt_plot" type="rqt_plot" args="/P /I /D" /-->
+</launch>

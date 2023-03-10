@@ -1,0 +1,1 @@
+/home/cse4568/catkin_ws/devel/.private/class_activity_4/lib/pkgconfig/class_activity_4.pc

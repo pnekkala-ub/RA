@@ -1,0 +1,5 @@
+<?xml version='1.0'?>
+
+<launch>
+    <node pkg="pa2" type="pa2_mapper.py" name="pa2_mapper" output="screen" />
+</launch>

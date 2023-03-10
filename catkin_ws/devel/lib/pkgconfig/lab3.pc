@@ -1,0 +1,1 @@
+/home/cse4568/catkin_ws/devel/.private/lab3/lib/pkgconfig/lab3.pc

@@ -1,0 +1,11 @@
+<launch>
+    <!-- start the driver node -->
+    <node pkg="class_activity_4" type="drive_node.py" name="drive_node" output="screen" />
+    
+    <!-- start the map node -->
+    <node pkg="class_activity_4" type="map_node.py" name="map_node"/>
+    
+    <!-- launch a launch file as part of this launch file -->
+    <!-- start gazebo and rviz -->
+    <include file="$(find audubon-gazebo)/launch/testing_ground.launch"/>
+</launch>

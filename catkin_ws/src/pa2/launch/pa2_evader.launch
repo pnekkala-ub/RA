@@ -1,0 +1,6 @@
+<?xml version='1.0'?>
+
+<launch>
+    <node pkg="pa2" type="pa2_evader.py" name="pa2_evader" output="screen" />
+    <!--node pkg="pa2" type="pa2_scanner.py" name="pa2_scanner" /-->
+</launch>

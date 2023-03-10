@@ -1,0 +1,8 @@
+prefix=/home/cse4568/catkin_ws/install
+
+Name: class_activity_4
+Description: Description of class_activity_4
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
