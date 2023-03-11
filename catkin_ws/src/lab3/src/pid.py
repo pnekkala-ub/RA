@@ -15,13 +15,13 @@ class PID:
     def __init__(self) -> None:
         self.reset = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
         self.reset()
-        rospy.init_node("viz_node")
+        rospy.init_node("PID")
         self.last_time = rospy.get_time()
         self.last_error = 0.0
         self.last_sa = 0.0
         self.frequency = 0.01
         self.p, self.i, self.d = 0.0, 0.0, 0.0
-        self.kp, self.ki, self.kd = 0.01, 1.0, 0.08
+        self.kp, self.ki, self.kd = 1, 0.05, 3
         self.ref_pub = rospy.Publisher(name="car_1/ref", data_class=Marker, queue_size=1)
         self.odom_sub = rospy.Subscriber('car_1/base/odom', Odometry, self.steer)
         self.ack_pub = rospy.Publisher("car_1/command", AckermannDrive, queue_size=1)
@@ -31,10 +31,18 @@ class PID:
         self.d_pub = rospy.Publisher("D",Float32, queue_size=1)
         self.error_track=[]
         self.mae=[]
+        self.file = open('../stats.txt','w+')
         rospy.on_shutdown(self.shutdown)
         self.plot_marker()
 
     def shutdown(self):
+        out =str(self.kp)+","+str(self.ki)+","+str(self.kd)+" : "+functools.reduce(lambda a,b: str(a)+","+str(b), self.mae,"")
+        print(self.file)
+        try:
+            self.file.write(out)
+            self.file.close()
+        except:
+            print("write failed")
         print(self.mae)
 
     def plot_marker(self):
@@ -69,7 +77,7 @@ class PID:
             
             marker.points.append(pt)
         
-        r = rospy.Rate(100)
+        r = rospy.Rate(1)
 
         while not rospy.is_shutdown():
             self.ref_pub.publish(marker)
@@ -117,7 +125,7 @@ class PID:
             self.last_error = error
             self.error_pub.publish(error)
             self.p = error
-            self.i += (d_err*dt)
+            self.i += (error*dt)
             self.d = d_err/dt
             self.p_pub.publish(self.p)
             self.i_pub.publish(self.i)
@@ -125,11 +133,12 @@ class PID:
 
             output = self.kp*self.p+self.ki*self.i+self.kd*self.d
             
-            sa = output
-            if sa < 0:
-                sa = -0.435 + output%0.435
-            else:
-                sa = output%0.435
+            sa = np.clip(output, -0.435, 0.435)
+            # if sa < 0:
+            #     sa = -0.435 + output%0.435
+            # else:
+            #     sa = output%0.435
+
             # if sa < -0.435:
             #     sa = -0.435
             # elif sa > 0.435:
@@ -139,9 +148,13 @@ class PID:
             #rospy.loginfo("X: "+str(ox))
             #rospy.loginfo("error: "+str(error))
             #rospy.loginfo("output: "+str(output))
-            #rospy.loginfo("sa: "+str(sa*180/np.pi))
+            rospy.loginfo("sa: "+str(sa*180/np.pi))
             drive = AckermannDrive()
-            drive.speed = rospy.get_param("/Vmax")
+            if ox > 199.7:
+                drive.speed=0
+                rospy.signal_shutdown("Terminal state reached.")
+            else:
+                drive.speed = rospy.get_param("/Vmax")
             drive.steering_angle = sa
             self.ack_pub.publish(drive)
 

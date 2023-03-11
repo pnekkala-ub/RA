@@ -30,8 +30,8 @@ class PP:
         self.ack_pub = rospy.Publisher("car_1/command", AckermannDrive, queue_size=1)
         #self.launch_pos = rospy.wait_for_message("/car_1/base/odom", Odometry, timeout=5)
         #self.last_l, self.last_c = [0,0,0], [0,0,0]
-        self.listener = tf.TransformListener()
-        self.listener.waitForTransform('odom','car_1_base_link',rospy.Time(0),rospy.Duration(1.0))
+        #self.listener = tf.TransformListener()
+        #self.listener.waitForTransform('odom','car_1_base_link',rospy.Time(0),rospy.Duration(1.0))
         self.plot_path()
 
     def shutdown(self):
@@ -49,6 +49,20 @@ class PP:
             # if i == len(self.track[1:])-1:
             #     return self.last_c
         return self.track[idx+1]
+    
+    def forward(self, curr):
+        min_dist = 1e5
+        idx=0
+
+        curr_pos = curr.pose.pose.position
+        curr_orient = curr.pose.pose.orientation
+
+        a = [curr_orient.x,curr_orient.y,curr_orient.z,curr_orient.w]
+        b = [curr_pos.position.x, curr_pos.position.y]
+        rpy=tf.transformations.euler_from_quaternion(a)
+        rospy.loginfo("heading: "+str(rpy[2]))
+        c=[b[0]*math.cos(rpy[2])-b[1]*math.sin(rpy[2]), b[0]*math.sin(rpy[2])+b[1]*math.cos(rpy[2])]
+
     
     def find_lookahead(self, curr):
         min_dist = 1e5

@@ -20,9 +20,9 @@ class PP:
         rospy.init_node("viz_node")
         rospy.on_shutdown(self.shutdown)
         self.track = np.loadtxt(rospy.get_param("/fname"), delimiter=",", dtype=str)
-        self.Kdd = 1
+        self.Kdd = 4
         self.speed = rospy.get_param("/Vmax")
-        self.count=0
+        self.count=-1
         self.ld = self.Kdd*self.speed
         self.ref_path_pub = rospy.Publisher(name="car_1/ref_path", data_class=MarkerArray, queue_size=1)
         self.close_pub = rospy.Publisher(name="car_1/close", data_class=Marker, queue_size=1)
@@ -30,6 +30,7 @@ class PP:
         self.initial = rospy.wait_for_message("/car_1/base/odom", Odometry)
         self.odom_sub = rospy.Subscriber('car_1/base/odom', Odometry, self.steer)
         self.ack_pub = rospy.Publisher("car_1/command", AckermannDrive, queue_size=1)
+        self.last_c, self.last_l = None, None
         self.plot_path()
 
     def shutdown(self):
@@ -56,7 +57,7 @@ class PP:
     def find_closest(self, curr):
         min_dist = 100000
         idx=0
-        print(curr.pose.pose.position.x, curr.pose.pose.position.y)
+        #print(curr.pose.pose.position.x, curr.pose.pose.position.y)
         for i,x in enumerate(self.track[1:]):
             dist = (curr.pose.pose.position.x-float(x[1]))**2 + (curr.pose.pose.position.y-float(x[2]))**2
             if  dist < min_dist:
@@ -65,8 +66,10 @@ class PP:
                 #break
             # if i == len(self.track[1:])-1:
             #     return self.last_c
-        print(idx+1)
+        #print(idx+1)
+        #self.count+=1
         return self.track[idx+1], self.track[(idx+1+math.floor(self.ld))%500+1]
+        #return self.track[(self.count)%500+1], self.track[(self.count+math.floor(self.ld))%500+1]
     
     def forward(self, curr):
         min_dist = 1000000
@@ -85,7 +88,7 @@ class PP:
                     min_dist = abs(dist-self.ld)
                     idx=i
         
-        print(idx+1)
+        #print(idx+1)
         return self.track[idx+1], self.track[idx+1+math.floor(self.Kdd)]
 
     
@@ -174,31 +177,49 @@ class PP:
         return close, lookahead
 
     def steer(self, odom):
-        if self.count == 0:
-            self.initial = odom
-        self.count+=1
+        # if self.count == 0:
+        #     self.initial = odom
+        # self.count+=1
         c,l = self.plot_close_target(odom)
 
-        alpha = math.atan2(-odom.pose.pose.position.y+float(l[2]), -odom.pose.pose.position.x+float(l[1]))
-        #alpha = math.atan2(-float(c[2])+float(l[2]), -float(c[1])+float(l[1]))
+        # if self.last_c is not None and self.last_c[0] == c[0]:
+        #     sa = 0
+        # else:
+
+        # rot = self.rotation(odom)
+        # c_n = np.dot(rot,np.array([float(c[1]),float(c[2]),0]))
+        # l_n = np.dot(rot,np.array([float(l[1]),float(l[2]),0]))
+        # alpha = np.arctan2(-c_n[2]+l_n[2], -c_n[1]+l_n[1])
+        # d = ((-c_n[2]+l_n[2])**2 + (-c_n[1]+l_n[1])**2)**0.5
+
+        #alpha = math.atan2(-odom.pose.pose.position.y+float(l[2]), -odom.pose.pose.position.x+float(l[1]))
+        alpha = np.arctan2(-float(c[2])+float(l[2]), -float(c[1])+float(l[1]))
         #d = ((-odom.pose.pose.position.y+float(l[2]))**2 + (-odom.pose.pose.position.x+float(l[1]))**2)**0.5
-        theta = math.atan(0.768*math.sin(alpha)/self.ld)
+        d = ((-float(c[2])+float(l[2]))**2 + (-float(c[1])+float(l[1]))**2)**0.5
+        print(d)
+        print(c)
+        print(l)    
+        #np.clip(d,3, 4)
+        heading = euler_from_quaternion([odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,odom.pose.pose.orientation.z,odom.pose.pose.orientation.w])
+        theta = np.arctan(0.768*math.sin(alpha-heading[2])/self.ld)
         #theta = 2*abs(float(c[2])-float(l[2]))/self.ld**2
+        #sa = theta-heading[2]
         sa = theta
         # if sa < 0:
         #     sa = -0.435 + theta%0.435
         # else:
         #     sa = theta%0.435
-        sa = np.clip(sa, -0.25, 0.25)
+        sa = np.clip(sa, -0.435, 0.435)
+        rospy.loginfo("heading: "+str(heading[2]))
+        rospy.loginfo("alpha: "+str(alpha*180/np.pi))
         rospy.loginfo("sa: "+str(sa*180/np.pi))
         drive = AckermannDrive()
         drive.speed = self.speed
         drive.steering_angle = sa
-        drive.steering_angle_velocity = 0.001
+        #drive.steering_angle_velocity = 0.0435
         self.ack_pub.publish(drive)
-
-        #self.last_l = l
-        #self.last_c = c
+        self.last_l = l
+        self.last_c = c
 
 
 def qv_mult(q1, v1):

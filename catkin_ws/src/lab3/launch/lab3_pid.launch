@@ -3,6 +3,6 @@
 <launch>
     <param name="Vmax" type="double" value="2" /> 
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab3)/rviz/pid.rviz" />
-    <node pkg="lab3" type="pid.py" name="pid" output="screen" launch-prefix="bash -c 'sleep 7.0; $0 $@'" />
+    <node pkg="lab3" type="pid.py" name="pid" output="screen" launch-prefix="bash -c 'sleep 2.0; $0 $@'" />
     <!--node name="plots" pkg="rqt_plot" type="rqt_plot" args="/P /I /D" /-->
 </launch>
